@@ -1,9 +1,15 @@
+# ====================================================================
+# Name: ngram_cli.py
+# Description: Simple program to demonstrate n-gram concept
+# Author: Aaran Rajadurai
+# Date: 20260208
+# ====================================================================
+
 import random
-import re
 
 
 END_TOKEN = "<END>"
-DEFAULT_FILE_PATH = "alice-in-wonderland-pg11.txt"
+DEFAULT_FILE_PATH = "data/alice-in-wonderland.txt"
 PUNCTUATION_END = [".", "!", "?", ";"]
 PUNCTUATION_DELETE = [",", "_", "“", "”", "(", ")", ":", "-"]
 
@@ -54,7 +60,10 @@ def tokenize(text, end_token=END_TOKEN):
             # print("{" + word + "}")
             tokens.append(word)
             word = ""
-            
+
+    if word != "":
+        tokens.append(word)
+    
     return tokens
                 
     # """
@@ -159,10 +168,14 @@ def weighted_choice(next_counts):
 def choose_start_state(model, seed_tokens, n):
     token = ""
     # print(f"seed_tokens: {seed_tokens}")
-    words = seed_tokens.split()
-    # print(words)
-    token = tuple(words)
-    # print(token)
+    
+    words = seed_tokens.lower().split()
+    if len(words) == n-1:
+        # print(words)
+        token = tuple(words)
+        # print(token)
+    else:
+        print("Error: invalid number of seed words")
     return token
     
     # """
@@ -197,14 +210,18 @@ def generate_sentence(model, n, seed_text, max_words = 25, end_token=END_TOKEN):
         new_seed = new_seed[len(new_seed) - n + 1:]
         # print(f"new_seed: {new_seed}")
         seed_token = choose_start_state(model, " ".join(new_seed), n)
-        # print(seed_token)
-        if seed_token in model:
-            next_word = weighted_choice(next_counts = model[seed_token])
-            sentence = sentence + " " + next_word
-            if next_word == end_token:
+        if seed_token != "":
+            # print(seed_token)
+            if seed_token in model:
+                next_word = weighted_choice(next_counts = model[seed_token])
+                sentence = sentence + " " + next_word
+                if next_word == end_token:
+                    break
+            else:
+                sentence = sentence + " " + end_token
                 break
         else:
-            sentence = sentence + " " + end_token
+            sentence = ""
             break
     
         
@@ -284,8 +301,9 @@ def main():
                 max_words = int(mw)
 
             sentence = generate_sentence(model, n, seed, max_words)
-            print("\nGenerated:")
-            print(sentence)
+            if sentence != "":
+                print("\nGenerated:")
+                print(sentence)
 
         elif choice == "3":
             print("\n--- Model info ---")
@@ -314,14 +332,14 @@ if __name__ == "__main__":
     if True:
         main()
     else:
-        # path = "alice-in-wonderland-pg11.txt"
-        path = "test.txt"
+        # path = DEFAULT_FILE_PATH
+        path = "data/test.txt"
         contents = read_file(path)
         tokenised = tokenize(contents)
         # for token in tokenised:
         #     print(token)
         print(len(tokenised))
-        model = build_ngram_model(tokenised, 2)
+        model = build_ngram_model(tokenised, 3)
         # print(model)
         for token in model:
             print(f"token {token}: {model[token]}")
@@ -329,5 +347,5 @@ if __name__ == "__main__":
         # print(next_word)
         # token = choose_start_state(model, "is a", 3)
         # print(token)
-        sentence = generate_sentence(model=model, n=2, seed_text="is", max_words = 25, end_token=END_TOKEN)
+        sentence = generate_sentence(model=model, n=3, seed_text="is", max_words = 25, end_token=END_TOKEN)
         print(f"sentence: {sentence}")
